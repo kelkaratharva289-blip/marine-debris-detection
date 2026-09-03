@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: marine-db
+    environment:
+      POSTGRES_USER: marine
+      POSTGRES_PASSWORD: marine
+      POSTGRES_DB: marine_debris
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marine"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: marine-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    environment:
+      DATABASE_URL: postgresql://marine:marine@db:5432/marine_debris
+      YOLO_MODEL_PATH: yolov8n.pt
+      DEBUG: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+
+  frontend:
+    build: ./frontend
+    container_name: marine-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

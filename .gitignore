@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Uploaded files
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Large sonar datasets
+*.tif
+*.tiff
+backend/data/raw/images/
+backend/data/raw/labels/
+backend/data/train/
+backend/data/val/
+backend/data/test/
+dataset/images/
+dataset/labels/
+dataset/data.yaml
+
+# Model weights
+models/*.pt
+models/*.onnx
+models/*.engine
+backend/models/*.pt
+backend/models/*.onnx
+backend/models/*.engine
+
+# Training outputs
+backend/runs/
+
+# Generated reports
+reports/*.json
+reports/*.csv
+
+# OS / logs
+.DS_Store
+*.log
+*.pyc

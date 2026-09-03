@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "leaflet/dist/leaflet.css";
+
+@layer base {
+  html {
+    font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-abyss-950 text-slate-200 antialiased;
+    background-image: var(--app-bg);
+  }
+
+  ::selection {
+    background: rgba(56, 189, 248, 0.25);
+    color: #e0f2fe;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #071422;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1b2f47;
+    border-radius: 6px;
+    border: 2px solid #071422;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #25415f;
+  }
+}
+
+@layer components {
+  /* Glassmorphism surface */
+  .glass {
+    @apply border border-white/[0.07] bg-abyss-800/60 backdrop-blur-md;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  }
+
+  .glass-subtle {
+    @apply border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Clean primary button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-cyan-500 px-4 py-2 text-sm font-semibold text-abyss-950 transition-colors duration-150 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Ghost/secondary button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-200 transition-colors duration-150 hover:border-cyan-400/40 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/40;
+  }
+
+  /* Field inputs */
+  .field {
+    @apply w-full rounded-md border border-white/10 bg-abyss-900/60 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 shadow-sm outline-none transition-colors duration-150 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.leaflet-container {
+  @apply h-full w-full bg-abyss-900;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.leaflet-container a {
+  color: #22d3ee;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: rgba(7, 20, 34, 0.92);
+  color: #e2e8f0;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.leaflet-popup-content {
+  font-family: "Inter", system-ui, sans-serif;
+  margin: 12px 16px;
+}
+
+.leaflet-container .leaflet-control-zoom a {
+  background: rgba(7, 20, 34, 0.85);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.leaflet-container .leaflet-control-zoom a:hover {
+  background: rgba(14, 35, 56, 0.95);
+  color: #fff;
+}
+
+.leaflet-container .leaflet-control-attribution {
+  background: rgba(7, 20, 34, 0.7);
+  color: #64748b;
+}
+
+.leaflet-container .leaflet-control-attribution a {
+  color: #94a3b8;
+}
+
+/* Anomaly map markers — distinct visuals per risk level.
+   Color is injected via the --marker CSS custom property. */
+.anomaly-marker {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  background: var(--marker);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--marker) 25%, transparent),
+    0 0 10px color-mix(in srgb, var(--marker) 60%, transparent);
+}
+
+.anomaly-marker-low {
+  width: 12px;
+  height: 12px;
+}
+
+.anomaly-marker-medium {
+  width: 15px;
+  height: 15px;
+}
+
+.anomaly-marker-high {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  transform: rotate(45deg);
+}
+
+.anomaly-marker-critical {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  animation: anomaly-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes anomaly-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--marker) 55%, transparent),
+      0 0 10px color-mix(in srgb, var(--marker) 60%, transparent);
+  }
+  70% {
+    box-shadow:
+      0 0 0 9px transparent,
+      0 0 10px color-mix(in srgb, var(--marker) 60%, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 transparent,
+      0 0 10px color-mix(in srgb, var(--marker) 60%, transparent);
+  }
+}
+
+/* Pulsing ring around the currently selected anomaly marker. */
+.anomaly-marker-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--marker);
+  border-radius: 50%;
+  animation: anomaly-ring 1.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes anomaly-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

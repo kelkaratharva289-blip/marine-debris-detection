@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SonicSweep · AI Underwater Debris Detection Console</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2304121c'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%233ee0ff'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%233ee0ff' stroke-opacity='.6' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%233ee0ff' stroke-opacity='.3' stroke-width='2'/%3E%3Cpath d='M16 16 L30 16' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+<style>
+/* ============================================================
+   SONICSWEEP · COMMAND CONSOLE
+   Theme tokens, base, layout, components
+   ============================================================ */
+:root{
+  --bg-0:#020910;
+  --bg-1:#04121c;
+  --bg-2:#061e2c;
+  --panel:#041421;
+  --panel-2:#07202f;
+  --panel-3:#0a2a3c;
+  --line:#0d2c3d;
+  --line-2:#12394d;
+  --line-3:#1b4a63;
+  --ink:#e6f6ff;
+  --ink-2:#aac7d8;
+  --ink-3:#6f90a3;
+  --ink-4:#48657a;
+  --cyan:#3ee0ff;
+  --cyan-2:#17b8d9;
+  --blue:#2f7fd6;
+  --good:#36e0a0;
+  --warn:#ffc457;
+  --high:#ff8f5c;
+  --bad:#ff5c6a;
+  --radius:6px;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg-0);
+  color:var(--ink);
+  font-family:var(--font);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(1100px 520px at 78% -8%, rgba(23,110,160,.14), transparent 60%),
+    radial-gradient(900px 480px at 8% 112%, rgba(30,90,190,.10), transparent 55%),
+    linear-gradient(rgba(62,224,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(62,224,255,.022) 1px, transparent 1px);
+  background-size:auto, auto, 46px 46px, 46px 46px;
+  background-attachment:fixed;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit}
+::selection{background:rgba(62,224,255,.28)}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- shared chrome ---------- */
+.wrap{max-width:1440px;margin:0 auto;padding:0 22px}
+
+.navbar{
+  position:sticky;top:0;z-index:60;
+  border-bottom:1px solid var(--line);
+  background:rgba(3,14,22,.86);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.nav-inner{
+  max-width:1440px;margin:0 auto;padding:0 22px;
+  display:flex;align-items:center;gap:18px;height:60px;
+}
+.brand{display:flex;align-items:center;gap:12px;margin-right:6px}
+.brand-mark{width:34px;height:34px;position:relative;flex:none}
+.brand-mark svg{position:absolute;inset:0}
+.brand-name{line-height:1.05}
+.brand-name b{display:block;font-size:15px;font-weight:800;letter-spacing:.14em;color:var(--ink)}
+.brand-name span{display:block;font-size:9px;font-weight:600;letter-spacing:.3em;color:var(--ink-3)}
+.nav-links{display:flex;gap:2px;margin-left:10px}
+.nav-links a{
+  padding:8px 12px;font-size:11.5px;font-weight:600;letter-spacing:.12em;
+  color:var(--ink-3);border-bottom:2px solid transparent;transition:color .18s,border-color .18s;
+}
+.nav-links a:hover{color:var(--ink-2)}
+.nav-links a.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.sys-pill{
+  display:inline-flex;align-items:center;gap:8px;padding:5px 11px;
+  border:1px solid var(--line-2);border-radius:999px;background:var(--panel);font-size:10.5px;font-weight:600;letter-spacing:.12em;color:var(--ink-2);
+}
+.sys-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 rgba(54,224,160,.6);animation:pulse 2.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(54,224,160,.55)}70%{box-shadow:0 0 0 7px rgba(54,224,160,0)}}
+.utc{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.06em}
+.utc b{color:var(--ink-2)}
+.burger{display:none;padding:7px;border:1px solid var(--line-2);border-radius:var(--radius)}
+.burger span{display:block;width:16px;height:1.5px;background:var(--ink-2);margin:3px 0}
+.mobile-nav{display:none;border-top:1px solid var(--line);background:var(--bg-1);padding:8px 22px 14px}
+.mobile-nav.open{display:block}
+.mobile-nav a{display:block;padding:11px 4px;color:var(--ink-2);font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
+.mobile-nav a.active{color:var(--cyan)}
+
+/* ---------- hero / mission strip ---------- */
+.hero{padding:34px 0 6px}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:10px;font-size:10.5px;font-weight:700;letter-spacing:.26em;
+  color:var(--cyan);border:1px solid rgba(62,224,255,.25);border-radius:999px;padding:5px 12px;background:rgba(62,224,255,.05);
+}
+.hero-eyebrow .tick{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:pulse 1.8s infinite}
+.hero h1{font-size:clamp(24px,3.4vw,40px);font-weight:800;letter-spacing:.02em;margin:16px 0 8px;line-height:1.12}
+.hero h1 .acc{color:var(--cyan)}
+.hero p{max-width:760px;color:var(--ink-2);font-size:14px;margin:0}
+.mission-strip{
+  margin-top:22px;display:flex;flex-wrap:wrap;gap:0;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:linear-gradient(180deg,var(--panel),rgba(4,20,33,.4));
+  overflow:hidden;
+}
+.ms{flex:1 1 150px;padding:12px 16px;border-right:1px solid var(--line);min-width:0;white-space:nowrap}
+.ms:last-child{border-right:none}
+.ms .k{font-size:9.5px;font-weight:700;letter-spacing:.2em;color:var(--ink-4)}
+.ms .v{font-size:12.5px;font-weight:600;color:var(--ink-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis}
+.ms .v b{color:var(--ink)}
+
+/* ---------- layout ---------- */
+.dash{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;padding:18px 0 40px}
+.section{scroll-margin-top:76px}
+
+/* ---------- panels ---------- */
+.panel{
+  position:relative;border:1px solid var(--line);border-radius:var(--radius);
+  background:linear-gradient(180deg,var(--panel),rgba(4,20,33,.35));
+  overflow:hidden;
+}
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--line);
+}
+.panel-title{display:flex;align-items:center;gap:10px;min-width:0}
+.panel-title .ic{width:26px;height:26px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;flex:none}
+.panel-title .ic svg{width:14px;height:14px;stroke:var(--cyan)}
+.panel-title h3{font-size:12px;font-weight:700;letter-spacing:.16em;margin:0;color:var(--ink)}
+.panel-title .sub{font-size:10px;color:var(--ink-4);letter-spacing:.06em}
+.panel-body{padding:16px}
+.tag{
+  font-size:9.5px;font-weight:700;letter-spacing:.16em;padding:3px 8px;border-radius:4px;
+  border:1px solid var(--line-2);color:var(--ink-3);background:var(--panel-2);
+}
+.tag.cyan{color:var(--cyan);border-color:rgba(62,224,255,.3);background:rgba(62,224,255,.06)}
+
+/* ---------- stat cards ---------- */
+.stat{
+  grid-column:span 2;border:1px solid var(--line);border-radius:var(--radius);
+  background:linear-gradient(180deg,var(--panel),rgba(4,20,33,.35));
+  padding:14px 16px 12px;position:relative;overflow:hidden;
+  transition:border-color .2s,transform .2s;
+}
+.stat:hover{border-color:var(--line-3);transform:translateY(-1px)}
+.stat .rule{position:absolute;left:0;top:0;height:2px;width:0;transition:width .6s ease}
+.stat:hover .rule{width:100%}
+.stat .k{font-size:9.5px;font-weight:700;letter-spacing:.2em;color:var(--ink-4)}
+.stat .v{font-size:26px;font-weight:800;letter-spacing:.02em;margin-top:6px;color:var(--ink);line-height:1}
+.stat .d{font-size:10.5px;color:var(--ink-4);margin-top:6px}
+.stat .d .up{color:var(--good)}
+.stat.blue .rule{background:linear-gradient(90deg,var(--cyan),transparent)}
+.stat.green .rule{background:linear-gradient(90deg,var(--good),transparent)}
+.stat.amber .rule{background:linear-gradient(90deg,var(--warn),transparent)}
+.stat.red .rule{background:linear-gradient(90deg,var(--bad),transparent)}
+.stat .mini{height:18px;margin-top:9px;display:flex;align-items:flex-end;gap:2px}
+.stat .mini i{flex:1;background:var(--cyan-2);opacity:.85;border-radius:1px}
+
+/* ---------- sonar scope ---------- */
+.sonar-wrap{grid-column:span 8;min-width:0}
+.controls{grid-column:span 4;min-width:0}
+.scope-stage{display:flex;gap:18px;align-items:stretch;padding:16px}
+.scope-box{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-width:0}
+.scope{
+  position:relative;width:min(430px,100%);aspect-ratio:1/1;border-radius:50%;
+  touch-action:none;user-select:none;
+}
+/* screen face */
+.scope-face{
+  position:absolute;inset:0;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(8,32,46,.0) 0%, rgba(8,32,46,.0) 62%, rgba(2,9,16,.0) 100%),
+    radial-gradient(circle at 50% 50%, #031019 0%, #041a29 62%, #020d17 100%);
+  border:1px solid var(--line-2);
+  box-shadow:inset 0 0 60px rgba(3,22,34,.9), 0 0 0 6px rgba(126,180,200,.06), 0 0 30px rgba(23,120,170,.12);
+  overflow:hidden;
+}
+.scope::after{
+  content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(62,224,255,.12), inset 0 0 26px rgba(0,0,0,.6);
+}
+.scope-ring{position:absolute;inset:0;border-radius:50%}
+.scope-ring.r1{inset:12.5%}
+.scope-ring.r2{inset:25%}
+.scope-ring.r3{inset:37.5%}
+.scope-criss{position:absolute;inset:0;opacity:.5}
+.scope-criss::before,
+.scope-criss::after{content:"";position:absolute;background:rgba(104,175,205,.13)}
+.scope-criss::before{left:50%;top:0;bottom:0;width:1px}
+.scope-criss::after{top:50%;left:0;right:0;height:1px}
+.scope-ring{background:
+  linear-gradient(0deg, rgba(104,175,205,.10) 1px, transparent 1px) 50% 50%/100% 25.0006% repeat-x,
+  linear-gradient(90deg, rgba(104,175,205,.10) 1px, transparent 1px) 50% 50%/25.0006% 100% repeat-y;
+}
+.sweep{
+  position:absolute;inset:0;border-radius:50%;pointer-events:none;will-change:transform;
+  background:conic-gradient(from 0deg,
+    rgba(62,224,255,0) 0deg,
+    rgba(62,224,255,0) 74deg,
+    rgba(62,224,255,.06) 84deg,
+    rgba(62,224,255,.5) 89deg,
+    #cff6ff 90deg,
+    rgba(102,214,255,.55) 91deg,
+    rgba(62,224,255,.10) 98deg,
+    rgba(62,224,255,0) 122deg);
+  mix-blend-mode:screen;
+}
+.sweep::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%, transparent 0 96%, #3ee0ff 97% 100%);
+  opacity:.0;
+}
+.blip{
+  position:absolute;width:0;height:0;z-index:5;
+  opacity:0;transition:opacity .45s ease;
+}
+.blip.lit{opacity:1}
+.blip .px{
+  position:absolute;left:50%;top:50%;width:7px;height:7px;transform:translate(-50%,-50%) rotate(45deg);
+  border:1px solid rgba(3,14,22,.9);
+  box-shadow:0 0 8px 1px currentColor;
+}
+.blip .ring{
+  position:absolute;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);
+  border-radius:50%;border:1px solid currentColor;opacity:0;transition:opacity .2s;
+}
+.blip.sel .ring{opacity:.9}
+.blip.sel .px{box-shadow:0 0 0 2px rgba(3,14,22,.6),0 0 12px 2px currentColor}
+.blip .lab{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-160%);
+  background:rgba(3,14,22,.88);border:1px solid var(--line-2);
+  padding:2px 6px;border-radius:4px;font-size:8.5px;font-weight:700;letter-spacing:.08em;
+  color:var(--ink-2);white-space:nowrap;z-index:6;display:flex;gap:5px;align-items:center;
+}
+.blip .lab b{color:var(--ink)}
+.blip .lab i{font-style:normal;font-weight:700}
+.scope-readouts{position:absolute;inset:0;pointer-events:none;z-index:8}
+.read{position:absolute;font-size:8.5px;font-weight:700;letter-spacing:.14em;color:rgba(160,206,222,.7)}
+.read.tl{top:8px;left:12px}.read.tr{top:8px;right:12px}.read.bl{bottom:8px;left:12px}.read.br{bottom:8px;right:12px}
+.read.sim{top:8px;right:38px;color:var(--warn)}
+.center-mark{
+  position:absolute;left:50%;top:50%;width:14px;height:14px;transform:translate(-50%,-50%);
+  opacity:.8;pointer-events:none;
+}
+.bearing-tape{position:absolute;inset:0;border-radius:50%;pointer-events:none}
+.bearing-tape i{
+  position:absolute;left:50%;top:0;width:1px;height:6px;background:rgba(133,203,224,.5);
+  transform-origin:top;transform:translateX(-.5px) rotate(var(--a));
+}
+.bearing-tape i::after{content:"";position:absolute;left:-.5px;bottom:0;height:1px;background:inherit}
+
+/* contact queue */
+.queue{width:236px;flex:none;display:flex;flex-direction:column;border-left:1px solid var(--line);min-height:0}
+.queue .qh{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line)}
+.queue .qh span{font-size:9.5px;font-weight:700;letter-spacing:.2em;color:var(--ink-4)}
+.queue .qh em{font-style:normal;font-size:10px;color:var(--cyan-2);font-weight:700}
+.qlist{flex:1;overflow:auto;padding:6px}
+.qitem{
+  display:flex;align-items:center;gap:9px;padding:7px 8px;border:1px solid transparent;border-radius:5px;
+  transition:background .18s,border-color .18s;cursor:pointer;animation:qin .35s ease both;
+}
+@keyframes qin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.qitem:hover{background:var(--panel-2);border-color:var(--line-2)}
+.qitem .qdot{width:8px;height:8px;flex:none;border:1px solid rgba(3,14,22,.8);box-shadow:0 0 6px currentColor}
+.qitem .qinfo{min-width:0;flex:1}
+.qitem .qinfo b{display:block;font-size:11px;font-weight:700;color:var(--ink);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qitem .qinfo span{display:block;font-size:9px;color:var(--ink-4);margin-top:1px}
+.qitem .qrisk{font-size:9.5px;font-weight:700;color:var(--ink-3);flex:none;letter-spacing:.04em}
+
+/* sonar transport controls */
+.sonar-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line)}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.1em;
+  padding:8px 12px;border:1px solid var(--line-2);border-radius:var(--radius);
+  color:var(--ink-2);background:var(--panel-2);transition:background .18s,color .18s,border-color .18s,transform .12s;
+}
+.btn:hover{background:var(--panel-3);color:var(--ink)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:rgba(62,224,255,.12);border-color:rgba(62,224,255,.4);color:var(--cyan)}
+.btn.primary:hover{background:rgba(62,224,255,.2)}
+.btn svg{width:13px;height:13px}
+.btn-group{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
+.btn-group button{padding:8px 11px;font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--ink-3);background:var(--panel-1, transparent);border-right:1px solid var(--line-2);transition:background .15s,color .15s}
+.btn-group button:last-child{border-right:none}
+.btn-group button:hover{color:var(--ink-2)}
+.btn-group button.on{background:rgba(62,224,255,.14);color:var(--cyan)}
+
+/* ---------- survey control ---------- */
+.ctl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ctl-block label{display:flex;justify-content:space-between;font-size:9.5px;font-weight:700;letter-spacing:.18em;color:var(--ink-4);margin-bottom:7px}
+.ctl-block label b{color:var(--ink-2);letter-spacing:.02em}
+.slider{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--cyan) var(--p,50%), var(--line-2) var(--p,50%));
+  outline:none}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);border:2px solid var(--bg-0);box-shadow:0 0 0 1px rgba(62,224,255,.5)}
+.slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--cyan);border:2px solid var(--bg-0)}
+.mode-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mode{
+  padding:10px 6px;font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);
+  border:1px solid var(--line-2);border-radius:var(--radius);background:var(--panel-2);transition:all .16s;
+}
+.mode.on{color:#02121d;background:var(--cyan);border-color:var(--cyan)}
+.ctl-read{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:var(--radius);margin-top:14px;overflow:hidden}
+.cr{flex:1 1 45%;padding:9px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cr:nth-child(even){border-right:none}
+.cr:nth-last-child(-n+2){border-bottom:none}
+.cr .k{font-size:8.5px;font-weight:700;letter-spacing:.18em;color:var(--ink-4)}
+.cr .v{font-size:13px;font-weight:700;color:var(--ink-2);margin-top:2px;letter-spacing:.04em}
+.line-progress{margin-top:14px}
+.line-progress .lp{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.12em;color:var(--ink-4);font-weight:700}
+.bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan-2),var(--cyan));transition:width .8s ease}
+
+/* ---------- analysis ---------- */
+.analysis{grid-column:span 12}
+.an-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:0;min-height:420px}
+.an-stage{display:flex;align-items:center;justify-content:center;padding:20px;background:
+  radial-gradient(600px 300px at 50% 0%, rgba(23,110,160,.10), transparent 65%), var(--bg-1);min-width:0}
+.drop{
+  width:100%;max-width:640px;border:1px dashed var(--line-3);border-radius:var(--radius);
+  background:rgba(10,42,60,.25);transition:all .2s;cursor:pointer;
+  text-align:center;padding:34px 20px;
+}
+.drop.drag{border-color:var(--cyan);background:rgba(62,224,255,.07)}
+.drop .dicon{width:44px;height:44px;margin:0 auto 12px;border:1px solid var(--line-2);border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--panel-2)}
+.drop .dicon svg{width:20px;height:20px;stroke:var(--cyan)}
+.drop b{display:block;font-size:13px;color:var(--ink-2)}
+.drop span{font-size:11px;color:var(--ink-4);display:block;margin-top:4px}
+.preview{position:relative;width:100%;max-width:640px;display:flex;justify-content:center;background:#000}
+.preview .astage{position:relative;width:100%}
+.preview img{display:block;width:100%;height:100%;object-fit:fill}
+.preview .vign{position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--line-2);pointer-events:none}
+.bbox{position:absolute;cursor:pointer;transition:box-shadow .15s;pointer-events:auto}
+.bbox .bx{position:absolute;inset:0;transition:box-shadow .15s}
+.bbox.sel .bx{box-shadow:0 0 0 1.5px currentColor,0 0 14px 1px currentColor}
+.bbox:not(.sel):hover .bx{box-shadow:0 0 0 1px currentColor}
+.bbox .corners{position:absolute;inset:-3px;pointer-events:none}
+.bbox .corners i{position:absolute;width:7px;height:7px;border-color:currentColor;border-style:solid;border-width:0}
+.bbox .corners i.tl{top:0;left:0;border-width:1.5px 0 0 1.5px}
+.bbox .corners i.tr{top:0;right:0;border-width:1.5px 1.5px 0 0}
+.bbox .corners i.bl{bottom:0;left:0;border-width:0 0 1.5px 1.5px}
+.bbox .corners i.br{bottom:0;right:0;border-width:0 1.5px 1.5px 0}
+.bbox .lbl{
+  position:absolute;left:-1px;top:-20px;display:flex;gap:6px;align-items:center;
+  background:rgba(3,14,22,.9);border:1px solid currentColor;border-radius:4px;
+  padding:2px 6px;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--ink);white-space:nowrap;
+}
+.bbox .lbl i{font-style:normal;color:rgba(3,14,22,.9);padding:0 3px;border-radius:3px;font-weight:800}
+.an-side{border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.pipeline{padding:12px 16px;border-bottom:1px solid var(--line)}
+.pipeline .pt{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:11px;color:var(--ink-3)}
+.pipeline .pt .st{width:14px;height:14px;flex:none;border-radius:50%;border:1.5px solid var(--line-3);display:flex;align-items:center;justify-content:center}
+.pipeline .pt .st svg{width:8px;height:8px;stroke:none;visibility:hidden}
+.pipeline .pt.done .st{background:rgba(54,224,160,.16);border-color:var(--good);color:var(--good)}
+.pipeline .pt.done .st svg{visibility:visible;stroke:var(--good);fill:none}
+.pipeline .pt.done{color:var(--ink-2)}
+.pipeline .pt.active .st{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(62,224,255,.14)}
+.pipeline .pt.active{color:var(--cyan)}
+.pipeline .pt .pc{margin-left:auto;font-size:10px;font-weight:700;color:var(--ink-4)}
+.an-detail{padding:16px;flex:1;overflow:auto}
+.an-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;color:var(--ink-4);padding:20px}
+.an-empty svg{width:34px;height:34px;stroke:var(--ink-4);opacity:.7;margin-bottom:10px}
+.an-empty.b{font-size:12.5px;color:var(--ink-2)}
+.detail .di{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.detail .di h4{font-size:15px;font-weight:800;margin:0;letter-spacing:.02em;text-transform:capitalize}
+.detail .di .rl{border-radius:4px;padding:3px 8px;font-size:9px;font-weight:800;letter-spacing:.14em;color:#02121d}
+.meter{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.meter .mk{font-size:9px;font-weight:700;letter-spacing:.16em;color:var(--ink-4);margin-bottom:5px}
+.gauge{display:flex;flex-direction:column;align-items:center;gap:4px}
+.gauge svg{width:74px;height:74px;transform:rotate(-90deg)}
+.gauge .gv{font-size:17px;font-weight:800}
+.gauge .gl{font-size:8.5px;letter-spacing:.16em;color:var(--ink-4);font-weight:700}
+.feat{margin-top:14px}
+.feat .fk{font-size:9px;font-weight:700;letter-spacing:.16em;color:var(--ink-4);margin-bottom:7px}
+.ft{display:flex;align-items:center;gap:8px;margin:5px 0}
+.ft .fn{width:92px;font-size:10.5px;color:var(--ink-3)}
+.ft .bar{flex:1}
+.ft .fv{width:38px;text-align:right;font-size:10.5px;font-weight:700;color:var(--ink-2)}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.kv .kvv{border:1px solid var(--line);border-radius:5px;padding:8px 9px}
+.kv .kvv .k{font-size:8.5px;letter-spacing:.16em;color:var(--ink-4);font-weight:700}
+.kv .kvv .v{font-size:11.5px;font-weight:700;color:var(--ink-2);margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-top:1px solid var(--line)}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.05em;
+  padding:5px 9px;border:1px solid var(--line-2);border-radius:999px;color:var(--ink-3);background:var(--panel);transition:all .15s;
+}
+.chip .cd{width:7px;height:7px;border-radius:50%}
+.chip:hover{color:var(--ink-2);border-color:var(--line-3)}
+.chip.sel{border-color:rgba(62,224,255,.5);color:var(--cyan);background:rgba(62,224,255,.07)}
+
+/* ---------- map ---------- */
+.map-wrap{grid-column:span 8;min-width:0}
+.systems{grid-column:span 4;min-width:0}
+.map-body{position:relative;padding:0}
+.map-svg{display:block;width:100%;height:auto;min-height:380px;background:linear-gradient(180deg,#031420,#020b13)}
+.map-svg .gline{stroke:rgba(126,186,214,.08);stroke-width:.12}
+.map-svg .coast{fill:rgba(64,152,110,.10);stroke:rgba(96,200,150,.4);stroke-width:.22}
+.map-svg .track-planned{stroke:rgba(160,200,220,.3);stroke-width:.22;stroke-dasharray:1.4 1.2;fill:none}
+.map-svg .track-surv{stroke:rgba(62,224,255,.55);stroke-width:.5;fill:none;filter:drop-shadow(0 0 3px rgba(62,224,255,.4))}
+.map-svg .m-g{fill:#8fd6ff}
+.map-svg text{font-family:var(--font);fill:#5c8296;font-size:2px;letter-spacing:.12em}
+.map-marker{position:absolute;cursor:pointer;pointer-events:auto}
+.map-marker .mdot{width:12px;height:12px;border-radius:50%;border:1.5px solid rgba(3,14,22,.85);box-shadow:0 0 0 3px rgba(3,14,22,.35),0 0 10px 1px currentColor}
+.map-marker .mring{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);border-radius:50%;border:1px solid currentColor;opacity:0;transition:opacity .2s}
+.map-marker:hover .mring,.map-marker.sel .mring{opacity:.9}
+.map-marker.sel .mdot{box-shadow:0 0 0 2px rgba(3,14,22,.5),0 0 14px 2px currentColor}
+.map-marker .mtip{
+  position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
+  background:rgba(3,14,22,.92);border:1px solid var(--line-3);border-radius:5px;padding:6px 9px;
+  white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none;z-index:12;
+}
+.map-marker:hover .mtip{opacity:1}
+.map-marker .mtip b{font-size:10.5px;display:block;color:var(--ink)}
+.map-marker .mtip span{font-size:9px;color:var(--ink-4)}
+.map-grid-overlay{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(rgba(126,186,214,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(126,186,214,.05) 1px,transparent 1px);background-size:52px 52px}
+.map-legend{display:flex;flex-wrap:wrap;gap:12px;padding:10px 14px;border-top:1px solid var(--line)}
+.map-legend span{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--ink-3)}
+.map-legend i{width:8px;height:8px;border-radius:50%}
+.map-zoom{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;z-index:5}
+.map-zoom button{width:30px;height:30px;font-size:15px;font-weight:700;color:var(--ink-2);background:rgba(4,20,33,.9);border-bottom:1px solid var(--line-2);display:flex;align-items:center;justify-content:center}
+.map-zoom button:last-child{border-bottom:none}
+.map-zoom button:hover{color:var(--cyan);background:rgba(10,42,60,.9)}
+.map-coord{position:absolute;left:12px;bottom:12px;font-size:9.5px;font-weight:700;letter-spacing:.14em;color:var(--ink-3);background:rgba(4,20,33,.8);padding:5px 9px;border-radius:4px;border:1px solid var(--line-2)}
+
+/* ---------- system panel ---------- */
+.sys-list{padding:6px 14px 14px}
+.sys-row{display:flex;align-items:center;gap:11px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.sys-row:last-child{border-bottom:none}
+.sys-row .sd{width:9px;height:9px;border-radius:50%;flex:none}
+.sys-row .sd.ok{background:var(--good);box-shadow:0 0 8px rgba(54,224,160,.5)}
+.sys-row .sd.st{background:var(--warn);box-shadow:0 0 8px rgba(255,196,87,.45)}
+.sys-row .sn{flex:1;min-width:0}
+.sys-row .sn b{display:block;font-size:11.5px;font-weight:700;color:var(--ink-2);letter-spacing:.03em}
+.sys-row .sn span{display:block;font-size:9px;color:var(--ink-4);margin-top:1px}
+.sys-row .sv{font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:.04em;text-align:right}
+.sys-foot{padding:12px 14px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:10px;color:var(--ink-4)}
+.sys-foot b{color:var(--ink-2)}
+.samp{font-size:10px;font-weight:700;color:var(--cyan-2);letter-spacing:.1em}
+
+/* ---------- archive cards ---------- */
+.archive{grid-column:span 12}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(246px,1fr));gap:12px;padding:16px}
+.dcard{
+  border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(180deg,var(--panel),rgba(4,20,33,.35));
+  overflow:hidden;transition:transform .18s,border-color .18s,box-shadow .18s;cursor:pointer;animation:cardin .5s ease both;
+}
+@keyframes cardin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.dcard:hover{transform:translateY(-2px);border-color:var(--line-3);box-shadow:0 6px 22px rgba(0,0,0,.35)}
+.dcard.sel{border-color:rgba(62,224,255,.55);box-shadow:0 0 0 1px rgba(62,224,255,.25),0 8px 26px rgba(0,0,0,.4)}
+.dthumb{position:relative;height:74px;background:#020d16}
+.dthumb .noise{position:absolute;inset:0;opacity:.5;
+  background-image:radial-gradient(rgba(120,180,205,.18) 1px,transparent 1px);background-size:4px 4px}
+.dthumb .hl{position:absolute;left:6%;right:6%;height:9px;top:45%;transform:rotate(-2deg);
+  background:linear-gradient(180deg,rgba(220,240,250,.5),rgba(120,200,230,.18));border-radius:2px;opacity:.9}
+.dthumb .box{position:absolute;border:1px solid currentColor;background:currentColor;opacity:.16;transition:opacity .2s}
+.dcard:hover .dthumb .box{opacity:.3}
+.dcard .dhead{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 0}
+.dcard .dhead b{font-size:10px;letter-spacing:.14em;color:var(--ink-4);font-weight:700}
+.dcard .dhead .rl{font-size:8px;font-weight:800;letter-spacing:.12em;padding:2px 7px;border-radius:3px;color:#02121d}
+.dcard .dname{padding:8px 12px 0;font-size:13px;font-weight:700;text-transform:capitalize;color:var(--ink)}
+.dcard .dmeta{padding:6px 12px 12px;font-size:9.5px;color:var(--ink-4);letter-spacing:.04em}
+.mrow{display:flex;align-items:center;gap:9px;padding:0 12px 5px}
+.mrow .ml{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--ink-4);width:84px;flex:none}
+.mrow .bar{flex:1}
+.mrow .mv{font-size:10px;font-weight:700;color:var(--ink-2);width:36px;text-align:right}
+
+/* ---------- analytics ---------- */
+.chart-panel{grid-column:span 6;min-width:0}
+.chart-body{padding:16px}
+.chart-body .ck{font-size:9px;font-weight:700;letter-spacing:.18em;color:var(--ink-4);margin-bottom:12px}
+.hbar{display:flex;align-items:center;gap:10px;margin:8px 0}
+.hbar .hl{width:108px;font-size:11px;color:var(--ink-2);font-weight:600;letter-spacing:.03em}
+.hbar .bar{flex:1}
+.hbar .hv{width:44px;text-align:right;font-size:11px;font-weight:700;color:var(--ink-2)}
+.dist{display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:8px}
+.dist .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+.dist .cb{width:100%;max-width:52px;border-radius:3px 3px 0 0;height:0;position:relative;transition:height .7s ease}
+.dist .cl{font-size:9.5px;font-weight:700;color:var(--ink-3);letter-spacing:.08em}
+.dist .cv{font-size:10px;font-weight:800;color:var(--ink-2)}
+.dist .cpct{font-size:8.5px;color:var(--ink-4)}
+
+/* ---------- footer ---------- */
+.footer{border-top:1px solid var(--line);padding:18px 0 26px;margin-top:6px}
+.foot-inner{max-width:1440px;margin:0 auto;padding:0 22px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;font-size:10.5px;color:var(--ink-4)}
+.foot-inner .fg{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.foot-inner b{color:var(--ink-3);letter-spacing:.14em;font-weight:700}
+
+/* ---------- reveal on scroll ---------- */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media (max-width:1100px){
+  .sonar-wrap,.controls{grid-column:span 12}
+  .queue{display:none}
+}
+@media (max-width:960px){
+  .map-wrap,.systems{grid-column:span 12}
+  .chart-panel{grid-column:span 12}
+  .an-grid{grid-template-columns:1fr}
+  .an-side{border-left:none;border-top:1px solid var(--line)}
+  .stat{grid-column:span 3}
+}
+@media (max-width:760px){
+  .nav-links,.sys-pill{display:none}
+  .burger{display:block}
+  .utc{display:none}
+  .stat{grid-column:span 6}
+  .mission-strip .ms{flex:1 1 46%;border-right:none;border-bottom:1px solid var(--line)}
+  .mission-strip .ms:last-child{border-bottom:none}
+  .ctl-grid{grid-template-columns:1fr}
+  .scope-stage{flex-direction:column}
+  .hero h1{font-size:24px}
+}
+@media (max-width:460px){
+  .stat{grid-column:span 12}
+  .brand-name span{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* ---------- helpers / data ---------- */
+const CLASS_META = {
+  ghost_net:   { label: "Ghost Net",   hex: "#63c7ff" },
+  shipwreck:   { label: "Shipwreck",   hex: "#b78bff" },
+  pipe:        { label: "Pipe",        hex: "#ffcf5c" },
+  cylinder:    { label: "Cylinder",    hex: "#59e0ad" },
+  container:   { label: "Container",   hex: "#ff9a6b" },
+  other_debris:{ label: "Other Debris",hex: "#9db6c6" },
+};
+const RISK_META = {
+  low:      { label: "LOW",      hex: "#36e0a0" },
+  medium:   { label: "MEDIUM",   hex: "#ffc457" },
+  high:     { label: "HIGH",     hex: "#ff8f5c" },
+  critical: { label: "CRITICAL", hex: "#ff5c6a" },
+};
+const riskLevel = (r) => (r >= 90 ? "critical" : r >= 75 ? "high" : r >= 50 ? "medium" : "low");
+const riskMeta = (r) => RISK_META[riskLevel(r)];
+const pct = (v) => `${(v * 100).toFixed(1)}%`;
+
+const CLS_LIST = Object.keys(CLASS_META);
+const rng = (min, max) => min + Math.random() * (max - min);
+
+const SEED_BLIPS = [
+  { id: "b01", bearing: 32,  rng: 48, cls: "pipe",         conf: 0.91, risk: 78 },
+  { id: "b02", bearing: 75,  rng: 66, cls: "ghost_net",    conf: 0.86, risk: 64 },
+  { id: "b03", bearing: 112, rng: 30, cls: "container",    conf: 0.89, risk: 72 },
+  { id: "b04", bearing: 150, rng: 74, cls: "cylinder",     conf: 0.74, risk: 61 },
+  { id: "b05", bearing: 198, rng: 40, cls: "other_debris", conf: 0.62, risk: 46 },
+  { id: "b06", bearing: 220, rng: 62, cls: "shipwreck",    conf: 0.94, risk: 88 },
+  { id: "b07", bearing: 263, rng: 22, cls: "pipe",         conf: 0.82, risk: 55 },
+  { id: "b08", bearing: 301, rng: 55, cls: "container",    conf: 0.93, risk: 84 },
+  { id: "b09", bearing: 340, rng: 38, cls: "ghost_net",    conf: 0.79, risk: 58 },
+  { id: "b10", bearing: 18,  rng: 27, cls: "cylinder",     conf: 0.77, risk: 52 },
+  { id: "b11", bearing: 125, rng: 56, cls: "other_debris", conf: 0.55, risk: 39 },
+  { id: "b12", bearing: 275, rng: 80, cls: "shipwreck",    conf: 0.88, risk: 80 },
+  { id: "b13", bearing: 188, rng: 20, cls: "pipe",         conf: 0.9,  risk: 70 },
+  { id: "b14", bearing: 345, rng: 72, cls: "container",    conf: 0.85, risk: 66 },
+];
+
+const PIPELINE_STEPS = [
+  "PREPROCESSING", "CONTRAST ENHANCE", "SPATIAL FILTER",
+  "YOLO INFERENCE", "ANOMALY CLASSIFY", "RISK FUSION",
+];
+
+const DETS = [
+  { id: "d1", cls: "ghost_net",    x: 0.13, y: 0.30, w: 0.15, h: 0.09, conf: 0.91, anomaly: "artificial",  art: 0.88, risk: 78, size: 3.42, time: "14:22:07" },
+  { id: "d2", cls: "pipe",         x: 0.36, y: 0.20, w: 0.25, h: 0.06, conf: 0.87, anomaly: "artificial",  art: 0.93, risk: 74, size: 9.61, time: "14:24:31" },
+  { id: "d3", cls: "container",    x: 0.60, y: 0.42, w: 0.12, h: 0.10, conf: 0.83, anomaly: "artificial",  art: 0.8,  risk: 71, size: 2.88, time: "14:26:09" },
+  { id: "d4", cls: "cylinder",     x: 0.19, y: 0.61, w: 0.09, h: 0.13, conf: 0.76, anomaly: "uncertain",   art: 0.62, risk: 64, size: 1.95, time: "14:29:44" },
+  { id: "d5", cls: "other_debris", x: 0.45, y: 0.69, w: 0.13, h: 0.08, conf: 0.58, anomaly: "uncertain",   art: 0.51, risk: 48, size: 1.22, time: "14:31:58" },
+  { id: "d6", cls: "shipwreck",    x: 0.73, y: 0.64, w: 0.16, h: 0.10, conf: 0.94, anomaly: "artificial",  art: 0.9,  risk: 88, size: 12.4, time: "13:58:12" },
+];
+
+const MAP_MARKERS = [
+  { id: "m01", x: 0.24, y: 0.36, cls: "shipwreck",    conf: 0.94, risk: 88, time: "13:58:12" },
+  { id: "m02", x: 0.40, y: 0.52, cls: "pipe",         conf: 0.87, risk: 74, time: "14:24:31" },
+  { id: "m03", x: 0.55, y: 0.30, cls: "container",    conf: 0.93, risk: 84, time: "14:26:09" },
+  { id: "m04", x: 0.31, y: 0.70, cls: "ghost_net",    conf: 0.86, risk: 64, time: "14:19:45" },
+  { id: "m05", x: 0.68, y: 0.58, cls: "cylinder",     conf: 0.74, risk: 61, time: "14:29:44" },
+  { id: "m06", x: 0.82, y: 0.44, cls: "container",    conf: 0.85, risk: 66, time: "14:40:02" },
+  { id: "m07", x: 0.14, y: 0.62, cls: "other_debris", conf: 0.62, risk: 46, time: "14:31:58" },
+  { id: "m08", x: 0.48, y: 0.80, cls: "ghost_net",    conf: 0.91, risk: 78, time: "14:37:19" },
+];
+
+const BY_CLASS = [
+  ["ghost_net", 72], ["other_debris", 61], ["pipe", 48], ["container", 33], ["cylinder", 22], ["shipwreck", 10],
+];
+const RISK_DIST = [
+  ["LOW", 96, "#36e0a0"], ["MEDIUM", 87, "#ffc457"], ["HIGH", 38, "#ff8f5c"], ["CRITICAL", 25, "#ff5c6a"],
+];
+
+const SYS_ROWS = [
+  { name: "Sonar Array",      detail: "455 kHz · head 1",   v: "ONLINE 8.4 ms" },
+  { name: "AI Inference",     detail: "YOLOv8 · ONNX·EDGE", v: "12.1 ms/run" },
+  { name: "Anomaly Classifier",detail: "Feature fusion v2", v: "NOMINAL" },
+  { name: "Data & Telemetry", detail: "Survey uplink",      v: "74.2 Mb/s" },
+  { name: "Geodatabase",      detail: "PostGIS · SRID 4326",v: "STANDBY" },
+  { name: "Power / Thermal",  detail: "Bus 24 V · coolant",  v: "41.2 °C" },
+];
+
+/* ---------- small bits ---------- */
+const IconMark = () => (
+  <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true">
+    <circle cx="16" cy="16" r="4" fill="#3ee0ff" />
+    <circle cx="16" cy="16" r="10" fill="none" stroke="#3ee0ff" strokeOpacity=".55" strokeWidth="2" />
+    <circle cx="16" cy="16" r="14" fill="none" stroke="#3ee0ff" strokeOpacity=".22" strokeWidth="2" />
+    <path d="M16 16 L29 16" stroke="#e6f6ff" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+const Check = () => <svg viewBox="0 0 10 10" width="9" height="9"><path d="M2 5l2 2 4-4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const Play = () => <svg viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5z" /></svg>;
+const Pause = () => <svg viewBox="0 0 12 12" fill="currentColor"><path d="M2 1h3v10H2zM7 1h3v10H7z" /></svg>;
+
+function StatCard({ label, value, sub, tone, bars }) {
+  const n = useCountUp(value, 1300);
+  return (
+    <div className={`stat ${tone}`} ref={reveal}>
+      <div className="rule" />
+      <div className="k">{label}</div>
+      <div className="v tnum">{n}</div>
+      {bars ? (
+        <div className="mini">{bars.map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}</div>
+      ) : (
+        <div className="d">{sub}</div>
+      )}
+    </div>
+  );
+}
+function useCountUp(target, dur) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    let raf, start;
+    const tick = (t) => {
+      if (start === undefined) start = t;
+      const p = Math.min((t - start) / dur, 1);
+      setV(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, dur]);
+  return v;
+}
+const reveal = (node) => {
+  if (!node) return;
+  const io = new IntersectionObserver((en) => {
+    en.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  io.observe(node);
+};
+
+/* ---------- uptime + clock ---------- */
+function useUptime() {
+  const [s, setS] = useState(0);
+  useEffect(() => { const t = setInterval(() => setS((x) => x + 1), 1000); return () => clearInterval(t); }, []);
+  const hh = String(Math.floor(s / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+  const ssC = String(s % 60).padStart(2, "0");
+  return `${hh}:${mm}:${ssC}`;
+}
+function useUtcClock() {
+  const [t, setT] = useState(new Date());
+  useEffect(() => { const i = setInterval(() => setT(new Date()), 1000); return () => clearInterval(i); }, []);
+  return t.toUTCString().slice(17, 25);
+}
+
+/* ---------- sonar scope ---------- */
+function SonarScope() {
+  const [contacts, setContacts] = useState(SEED_BLIPS);
+  const [lit, setLit] = useState([]);
+  const [sel, setSel] = useState(null);
+  const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState(1);
+  const angleRef = useRef(0);
+  const playRef = useRef(true);
+  const speedRef = useRef(38);
+  const sweepEl = useRef(null);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setContacts((prev) => {
+        if (prev.length >= 26) return prev;
+        const idx = prev.length;
+        const cls = CLS_LIST[Math.floor(Math.random() * CLS_LIST.length)];
+        const c = { id: "b" + (idx + 100), bearing: rng(0, 359), rng: rng(16, 84), cls,
+                    conf: rng(0.62, 0.94), risk: Math.round(rng(38, 90)) };
+        return [...prev, c];
+      });
+    }, 9000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    playRef.current = playing;
+  }, [playing]);
+  useEffect(() => {
+    speedRef.current = 38 * speed;
+  }, [speed]);
+
+  useEffect(() => {
+    let raf, last = performance.now();
+    const loop = (t) => {
+      const dt = Math.min((t - last) / 1000, 0.1);
+      last = t;
+      if (playRef.current) {
+        angleRef.current = (angleRef.current + dt * speedRef.current) % 360;
+        if (sweepEl.current) sweepEl.current.style.transform = `rotate(${angleRef.current}deg)`;
+        const head = angleRef.current;
+        setLit((prev) => {
+          let changed = false;
+          const next = prev.slice();
+          for (const c of contacts) {
+            if (!next.includes(c.id)) {
+              const d = Math.abs(((head - c.bearing + 540) % 360) - 180);
+              if (d < 4.5) { next.push(c.id); changed = true; }
+            }
+          }
+          return changed ? next : prev;
+        });
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [contacts]);
+
+  const resetSweep = () => {
+    angleRef.current = 0;
+    if (sweepEl.current) sweepEl.current.style.transform = "rotate(0deg)";
+    setLit([]);
+    setSel(null);
+  };
+
+  const blips = useMemo(() => contacts.map((c) => {
+    const rad = (c.bearing * Math.PI) / 180;
+    const R = 46;
+    const px = 50 + R * Math.sin(rad);
+    const py = 50 - R * Math.cos(rad);
+    return { ...c, px, py };
+  }), [contacts]);
+  const litList = blips.filter((b) => lit.includes(b.id));
+  const queue = litList.slice().reverse();
+
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <div className="panel-title">
+          <span className="ic"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="10"/></svg></span>
+          <div>
+            <h3>LIVE SONAR FEED</h3>
+            <div className="sub">Sector-scan · 455 kHz · 500 m range</div>
+          </div>
+        </div>
+        <span className="tag cyan">SCANNING</span>
+      </div>
+
+      <div className="scope-stage">
+        <div className="scope-box">
+          <div className="scope">
+            <div className="scope-face">
+              <div className="scope-criss" />
+              <div className="scope-ring r1" />
+              <div className="scope-ring r2" />
+              <div className="scope-ring r3" />
+              <div className="bearing-tape">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <i key={i} style={{ ["--a"]: `${i * 30}deg` }} />
+                ))}
+              </div>
+              <div className="sweep" ref={sweepEl} />
+              {blips.map((b) => (
+                <div key={b.id} className={`blip ${lit.includes(b.id) ? "lit" : ""} ${sel === b.id ? "sel" : ""}`}
+                     style={{ left: `${b.px}%`, top: `${b.py}%`, color: CLASS_META[b.cls].hex }}
+                     onClick={() => setSel(b.id)}>
+                  <span className="ring" />
+                  <span className="px" />
+                  {lit.includes(b.id) && (
+                    <span className="lab">
+                      <b>{CLASS_META[b.cls].label}</b>
+                      <i style={{ color: riskMeta(b.risk).hex }}>{pct(b.conf)}</i>
+                    </span>
+                  )}
+                </div>
+              ))}
+              <div className="scope-readouts">
+                <div className="read tl">RNG 500 m</div>
+                <div className="read tr">SCT 360°</div>
+                <div className="read sim">SIM</div>
+                <div className="read bl">MOD S/A</div>
+                <div className="read br">HDG 214°</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="queue">
+          <div className="qh"><span>CONTACT QUEUE</span><em>{queue.length}</em></div>
+          <div className="qlist">
+            {queue.length === 0 && (
+              <div style={{ padding: 14, fontSize: 11, color: "#48657a" }}>Awaiting contacts on next sweep pass…</div>
+            )}
+            {queue.map((c) => (
+              <div key={c.id} className="qitem" onClick={() => setSel(c.id)}>
+                <span className="qdot" style={{ background: riskMeta(c.risk).hex, color: riskMeta(c.risk).hex }} />
+                <span className="qinfo">
+                  <b>{CLASS_META[c.cls].label}</b>
+                  <span>CONF {pct(c.conf)} · BRG {String(Math.round(c.bearing)).padStart(3, "0")}°</span>
+                </span>
+                <span className="qrisk" style={{ color: riskMeta(c.risk).hex }}>{riskMeta(c.risk).label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="sonar-ctl">
+        <button className="btn primary" onClick={() => setPlaying((p) => !p)}>
+          {playing ? <Pause /> : <Play />}{playing ? "PAUSE" : "SCAN"}
+        </button>
+        <div className="btn-group">
+          {[0.5, 1, 2].map((s) => (
+            <button key={s} className={speed === s ? "on" : ""} onClick={() => setSpeed(s)}>
+              {s}x
+            </button>
+          ))}
+        </div>
+        <button className="btn" onClick={resetSweep}>RESET</button>
+        <span className="samp" style={{ marginLeft: "auto" }}>{queue.length} CONTACTS</span>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- survey control ---------- */
+function SurveyControl() {
+  const [mode, setMode] = useState("SURVEY+AI");
+  const [gain, setGain] = useState(68);
+  const [thr, setThr] = useState(45);
+  const [line, setLine] = useState(38);
+  useEffect(() => {
+    const t = setInterval(() => setLine((l) => (l + 0.8) % 101), 700);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <div className="panel-title">
+          <span className="ic"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><path d="M4 21V8l6-4 4 3 6-3v14"/><path d="M4 21h16"/></svg></span>
+          <div><h3>SURVEY CONTROL</h3><div className="sub">Acquisition mode & threshold</div></div>
+        </div>
+      </div>
+      <div className="panel-body">
+        <div className="mode-row">
+          {["TRANSIT", "SURVEY", "SURVEY+AI"].map((m) => (
+            <button key={m} className={`mode ${mode === m ? "on" : ""}`} onClick={() => setMode(m)}>{m}</button>
+          ))}
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <div className="ctl-block">
+            <label>ACQUISITION GAIN <b>{gain}%</b></label>
+            <input type="range" className="slider" min="0" max="100" value={gain}
+                   style={{ ["--p"]: `${gain}%` }} onChange={(e) => setGain(+e.target.value)} />
+          </div>
+          <div className="ctl-block" style={{ marginTop: 14 }}>
+            <label>AI CONFIDENCE THRESHOLD <b>{thr}%</b></label>
+            <input type="range" className="slider" min="10" max="90" value={thr}
+                   style={{ ["--p"]: `${thr}%` }} onChange={(e) => setThr(+e.target.value)} />
+          </div>
+        </div>
+        <div className="ctl-read">
+          <div className="cr"><div className="k">BOTTOM DEPTH</div><div className="v">128 m</div></div>
+          <div className="cr"><div className="k">WATER TEMP</div><div className="v">24.5 °C</div></div>
+          <div className="cr"><div className="k">BOTTOM TYPE</div><div className="v">SAND / MUD</div></div>
+          <div className="cr"><div className="k">PING RATE</div><div className="v">22 Hz</div></div>
+        </div>
+        <div className="line-progress">
+          <div className="lp"><span>SURVEY LINE 07 · TRACK</span><span className="tnum">{Math.floor(line)}%</span></div>
+          <div className="bar"><i style={{ width: `${line}%` }} /></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- image analysis ---------- */
+function Analysis() {
+  const fileRef = useRef(null);
+  const [url, setUrl] = useState(null);
+  const [imgSize, setImgSize] = useState(null);
+  const [drag, setDrag] = useState(false);
+  const [run, setRun] = useState(false);
+  const [step, setStep] = useState(0);
+  const [done, setDone] = useState(false);
+  const [sel, setSel] = useState(DETS[0].id);
+  const [analyzed, setAnalyzed] = useState(DETS.map((d) => d.id));
+
+  const pick = (f) => {
+    if (!f || !f.type.startsWith("image/")) return;
+    if (url) URL.revokeObjectURL(url);
+    const u = URL.createObjectURL(f);
+    setUrl(u); setImgSize(null);
+    setRun(false); setDone(false); setAnalyzed(DETS.map((d) => d.id));
+  };
+
+  const runPipeline = () => {
+    setRun(true); setDone(false); setAnalyzed([]); setStep(0);
+    let i = 0;
+    const t = setInterval(() => {
+      i += 1;
+      setStep(i);
+      if (i >= PIPELINE_STEPS.length) {
+        clearInterval(t);
+        setTimeout(() => { setRun(false); setDone(true); setAnalyzed(DETS.map((d) => d.id)); }, 350);
+      }
+    }, 620);
+  };
+
+  const selDet = DETS.find((d) => d.id === sel) || DETS[0];
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <div className="panel-title">
+          <span className="ic"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L7 20"/></svg></span>
+          <div><h3>AUTOMATED DEBRIS DETECTION</h3><div className="sub">Side-scan strip · bounding-box inference</div></div>
+        </div>
+        <button className="btn primary" onClick={runPipeline} disabled={run}>
+          {run ? "ANALYZING…" : done ? "RE-RUN ANALYSIS" : "RUN ANALYSIS"}
+        </button>
+      </div>
+
+      <div className="an-grid">
+        <div className="an-stage">
+          {!url ? (
+            <div className={`drop ${drag ? "drag" : ""}`}
+                 onClick={() => fileRef.current && fileRef.current.click()}
+                 onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+                 onDragLeave={() => setDrag(false)}
+                 onDrop={(e) => { e.preventDefault(); setDrag(false); pick(e.dataTransfer.files[0]); }}>
+              <div className="dicon">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 20h16"/></svg>
+              </div>
+              <b>Drop side-scan imagery or click to browse</b>
+              <span>.png · .jpg · .tif — sonar strips, up to 50 MB</span>
+            </div>
+          ) : (
+            <div className="preview">
+              <div className="astage" style={imgSize ? { aspectRatio: `${imgSize.w}/${imgSize.h}` } : { aspectRatio: "16/9" }}>
+                <img src={url} alt="Sonar strip preview"
+                     onLoad={(e) => { setImgSize({ w: e.target.naturalWidth, h: e.target.naturalHeight }); }} />
+                {done && DETS.map((d) => {
+                  const r = riskMeta(d.risk);
+                  const cls = CLASS_META[d.cls].hex;
+                  return (
+                    <div key={d.id} className={`bbox ${sel === d.id ? "sel" : ""}`}
+                         style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%`, width: `${d.w * 100}%`, height: `${d.h * 100}%`, color: r.hex }}
+                         onClick={() => setSel(d.id)}>
+                      <span className="bx" />
+                      <span className="corners"><i className="tl"/><i className="tr"/><i className="bl"/><i className="br"/></span>
+                      <span className="lbl"><i style={{ background: r.hex }}>{r.label}</i> {cls.toUpperCase()} · {pct(d.conf)}</span>
+                    </div>
+                  );
+                })}
+                <div className="vign" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="an-side">
+          <div className="pipeline">
+            {PIPELINE_STEPS.map((label, i) => {
+              let state = "pend";
+              if (run) state = i < step ? "done" : i === step ? "active" : "pend";
+              else if (done || analyzed.length) state = "done";
+              return (
+                <div key={label} className={`pt ${state}`}>
+                  <span className="st"><Check /></span>{label}
+                  {state === "active" && <span className="pc">RUNNING</span>}
+                  {state === "done" && run && <span className="pc">{Math.min(100, Math.round(((i + 1) / PIPELINE_STEPS.length) * 100))}%</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          {!url ? (
+            <div className="an-detail">
+              <div className="an-empty">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                <p className="b" style={{ margin: 0 }}>Awaiting sonar imagery</p>
+                <p style={{ margin: "6px 0 0", fontSize: 11 }}>Upload a strip to run the automated analysis pipeline.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="an-detail">
+              <div className="detail">
+                <div className="di">
+                  <h4>{CLASS_META[selDet.cls].label}</h4>
+                  <span className="rl" style={{ background: riskMeta(selDet.risk).hex }}>{riskMeta(selDet.risk).label}</span>
+                </div>
+                <div className="kv">
+                  <div className="kvv"><div className="k">OBJECT CLASS</div><div className="v" style={{ textTransform: "uppercase" }}>{selDet.cls}</div></div>
+                  <div className="kvv"><div className="k">EST. WIDTH</div><div className="v">{selDet.size} m</div></div>
+                  <div className="kvv"><div className="k">ANOMALY</div><div className="v" style={{ color: selDet.anomaly === "artificial" ? "#3ee0ff" : selDet.anomaly === "uncertain" ? "#ffc457" : "#36e0a0" }}>{selDet.anomaly.toUpperCase()}</div></div>
+                  <div className="kvv"><div className="k">LOGGED</div><div className="v">{selDet.time} UTC</div></div>
+                </div>
+                <div className="meter">
+                  <div>
+                    <div className="mk">CONFIDENCE</div>
+                    <div className="bar"><i style={{ width: `${selDet.conf * 100}%`, background: "linear-gradient(90deg,#17b8d9,#3ee0ff)" }} /></div>
+                    <div className="samp tnum" style={{ fontSize: 13, marginTop: 4 }}>{pct(selDet.conf)}</div>
+                  </div>
+                  <div>
+                    <div className="mk">ARTIFICIALITY</div>
+                    <div className="bar"><i style={{ width: `${selDet.art * 100}%`, background: "linear-gradient(90deg,#17b8d9,#3ee0ff)" }} /></div>
+                    <div className="samp tnum" style={{ fontSize: 13, marginTop: 4 }}>{pct(selDet.art)}</div>
+                  </div>
+                </div>
+                <div className="feat">
+                  <div className="fk">RISK ENGINE</div>
+                  <div className="ft"><span className="fn">Inference</span><div className="bar"><i style={{ width: `${selDet.conf * 100}%` }} /></div><span className="fv">{pct(selDet.conf)}</span></div>
+                  <div className="ft"><span className="fn">Artificiality</span><div className="bar"><i style={{ width: `${selDet.art * 100}%` }} /></div><span className="fv">{pct(selDet.art)}</span></div>
+                  <div className="ft"><span className="fn">Fused risk</span><div className="bar"><i style={{ width: `${selDet.risk}%`, background: "linear-gradient(90deg,#17b8d9,#3ee0ff)" }} /></div><span className="fv">{selDet.risk}</span></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="chips">
+            {DETS.map((d) => (
+              <button key={d.id} className={`chip ${sel === d.id ? "sel" : ""}`} onClick={() => setSel(d.id)}>
+                <span className="cd" style={{ background: CLASS_META[d.cls].hex }} />
+                {CLASS_META[d.cls].label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <input ref={fileRef} type="file" accept="image/*,.tif,.tiff" hidden onChange={(e) => pick(e.target.files[0])} />
+    </div>
+  );
+}
+
+/* ---------- anomaly map ---------- */
+function AnomalyMap() {
+  const [sel, setSel] = useState(MAP_MARKERS[0].id);
+  const [zoom, setZoom] = useState(1);
+  const [coord, setCoord] = useState(null);
+  const m = MAP_MARKERS.find((x) => x.id === sel) || MAP_MARKERS[0];
+  const rm = riskMeta(m.risk);
+
+  const track = MAP_MARKERS.map((p) => `${40 + p.x * 55},${8 + p.y * 58}`).join(" ");
+
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <div className="panel-title">
+          <span className="ic"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/><circle cx="12" cy="12" r="5"/></svg></span>
+          <div><h3>GEOSPATIAL ANOMALY MAP</h3><div className="sub">Survey grid 04-N · datum WGS84</div></div>
+        </div>
+        <span className="tag cyan">LIVE TRACK</span>
+      </div>
+
+      <div className="map-body">
+        <div style={{ padding: 14 }}>
+          <div style={{ position: "relative", overflow: "hidden", borderRadius: 4, border: "1px solid var(--line)" }}>
+            <svg viewBox="0 0 100 66" className="map-svg" style={{ transform: `scale(${zoom})`, transformOrigin: "center", transition: "transform .25s" }}
+                 onMouseMove={(e) => {
+                   const r = e.currentTarget.getBoundingClientRect();
+                   const x = ((e.clientX - r.left) / r.width) * 100;
+                   const y = ((e.clientY - r.top) / r.height) * 66;
+                   setCoord({ x, y });
+                 }}
+                 onMouseLeave={() => setCoord(null)}>
+              {Array.from({ length: 11 }).map((_, i) => (
+                <line key={`v${i}`} x1={i * 10} y1="0" x2={i * 10} y2="66" className="gline" />
+              ))}
+              {Array.from({ length: 8 }).map((_, i) => (
+                <line key={`h${i}`} x1="0" y1={i * 9.43} x2="100" y2={i * 9.43} className="gline" />
+              ))}
+              <text x="1" y="3">25.63°N</text><text x="1" y="64.5">25.41°N</text>
+              <text x="92" y="64.5">79.38°W</text>
+              <path className="coast" d="M0,0 L10,0 L14,6 L20,4 L26,8 L30,6 L34,10 L38,8 L44,12 L46,18 L50,20 L52,26 L56,28 L62,33 L66,38 L70,40 L74,44 L80,46 L84,50 L90,52 L96,54 L100,54 L100,0 Z" />
+              <polyline className="track-planned" points="8,60 20,52 32,44 44,38 56,30 68,24 80,18 92,12" />
+              <polyline className="track-surv" points="8,60 20,52 32,44 44,38 56,30 68,24 80,18 92,12" />
+            </svg>
+            {MAP_MARKERS.map((p) => {
+              const r = riskMeta(p.risk);
+              const x = 40 + p.x * 55;
+              const y = 8 + p.y * 58;
+              return (
+                <div key={p.id} className={`map-marker ${sel === p.id ? "sel" : ""}`}
+                     style={{ left: `${x}%`, top: `${y}%`, color: r.hex }}
+                     onClick={() => setSel(p.id)}>
+                  <span className="mring" />
+                  <span className="mdot" />
+                  <span className="mtip" style={{ color: r.hex }}>
+                    <b style={{ color: "#e6f6ff" }}>{CLASS_META[p.cls].label}</b>
+                    <span>CONF {pct(p.conf)} · {r.label}</span>
+                  </span>
+                </div>
+              );
+            })}
+            <div className="map-zoom">
+              <button onClick={() => setZoom((z) => Math.min(z + 0.25, 1.75))}>+</button>
+              <button onClick={() => setZoom((z) => Math.max(z - 0.25, 0.6))}>−</button>
+            </div>
+            {coord && (
+              <div className="map-coord tnum">GRID {coord.x.toFixed(1)} · {coord.y.toFixed(1)}</div>
+            )}
+          </div>
+        </div>
+
+        <div className="map-legend">
+          {Object.entries(RISK_META).map(([k, v]) => (
+            <span key={k}><i style={{ background: v.hex }} />{v.label.toUpperCase()}</span>
+          ))}
+          <span style={{ marginLeft: "auto" }}><i style={{ background: "#3ee0ff", borderRadius: 2 }} />SURVEYED TRACK</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- system status ---------- */
+function Systems() {
+  const uptime = useUptime();
+  const [samp, setSamp] = useState(48271839);
+  useEffect(() => {
+    const t = setInterval(() => setSamp((s) => s + Math.floor(Math.random() * 90) + 30), 1200);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <div className="panel-title">
+          <span className="ic"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><circle cx="6" cy="8" r=".5" fill="currentColor"/><circle cx="6" cy="12" r=".5" fill="currentColor"/><circle cx="6" cy="16" r=".5" fill="currentColor"/></svg></span>
+          <div><h3>SYSTEM STATUS</h3><div className="sub">Subsystem health · live telemetry</div></div>
+        </div>
+      </div>
+      <div className="sys-list">
+        {SYS_ROWS.map((s) => (
+          <div key={s.name} className="sys-row">
+            <span className="sd ok" />
+            <span className="sn"><b>{s.name}</b><span>{s.detail}</span></span>
+            <span className="sv tnum">{s.v}</span>
+          </div>
+        ))}
+      </div>
+      <div className="sys-foot">
+        <span>UPTIME <b className="tnum">{uptime}</b></span>
+        <span className="samp tnum">PINGS {samp.toLocaleString()}</span>
+        <button className="btn" style={{ padding: "5px 10px", fontSize: 10 }}>DIAGNOSTIC</button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- archive ---------- */
+function Archive() {
+  const [sel, setSel] = useState("d6");
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <div className="panel-title">
+          <span className="ic"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><path d="M4 7l3-3h10l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M4 7h16"/><path d="M9 12h6"/></svg></span>
+          <div><h3>DETECTION ARCHIVE</h3><div className="sub">Top confidence contacts · current mission</div></div>
+        </div>
+        <span className="tag">246 TOTAL</span>
+      </div>
+      <div className="cards">
+        {DETS.map((d, idx) => {
+          const r = riskMeta(d.risk);
+          return (
+            <div key={d.id} className={`dcard ${sel === d.id ? "sel" : ""}`}
+                 style={{ animationDelay: `${idx * 60}ms` }} onClick={() => setSel(d.id)}>
+              <div className="dthumb">
+                <div className="noise" />
+                <div className="hl" />
+                <div className="box" style={{ left: `${(d.x) * 100}%`, top: `${(d.y) * 100}%`, width: `${d.w * 100}%`, height: `${d.h * 100}%`, color: r.hex, borderColor: r.hex }} />
+              </div>
+              <div className="dhead">
+                <b>CONTACT {d.id.toUpperCase()}</b>
+                <span className="rl" style={{ background: r.hex }}>{r.label}</span>
+              </div>
+              <div className="dname">{CLASS_META[d.cls].label}</div>
+              <div className="dmeta">{d.time} UTC · EST. {d.size} m</div>
+              <div className="mrow">
+                <span className="ml">CONFIDENCE</span>
+                <div className="bar"><i style={{ width: `${d.conf * 100}%` }} /></div>
+                <span className="mv tnum">{d.conf * 100}</span>
+              </div>
+              <div className="mrow" style={{ paddingBottom: 12 }}>
+                <span className="ml">RISK</span>
+                <div className="bar"><i style={{ width: `${d.risk}%`, background: "linear-gradient(90deg,#17b8d9,#3ee0ff)" }} /></div>
+                <span className="mv tnum">{d.risk}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- analytics ---------- */
+function Analytics() {
+  const maxClass = Math.max(...BY_CLASS.map(([, n]) => n));
+  const totalDist = RISK_DIST.reduce((s, [, n]) => s + n, 0);
+  return (
+    <>
+      <div className="panel chart-panel">
+        <div className="panel-head">
+          <div className="panel-title"><span className="ic"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></svg></span><div><h3>DETECTIONS BY CLASS</h3><div className="sub">All archived missions</div></div></div>
+        </div>
+        <div className="chart-body">
+          {BY_CLASS.map(([cls, n]) => (
+            <div className="hbar" key={cls}>
+              <span className="hl">{CLASS_META[cls].label}</span>
+              <div className="bar"><i style={{ width: `${(n / maxClass) * 100}%`, background: CLASS_META[cls].hex, opacity: 0.9 }} /></div>
+              <span className="hv tnum">{n}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="panel chart-panel">
+        <div className="panel-head">
+          <div className="panel-title"><span className="ic"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 2 5-6"/></svg></span><div><h3>RISK DISTRIBUTION</h3><div className="sub">Fused AI + anomaly scores</div></div></div>
+        </div>
+        <div className="chart-body">
+          <div className="ck">246 DETECTIONS</div>
+          <div className="dist">
+            {RISK_DIST.map(([l, n, hex], idx) => (
+              <div className="col" key={l}>
+                <div className="cb" style={{ background: hex, height: `${(n / totalDist) * 100}%` }} />
+                <div className="cv tnum">{n}</div>
+                <div className="cpct tnum">{Math.round((n / totalDist) * 100)}%</div>
+                <div className="cl">{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------- app ---------- */
+function App() {
+  const [menu, setMenu] = useState(false);
+  const utc = useUtcClock();
+  const uptime = useUptime();
+  const refs = useRef({});
+  const [active, setActive] = useState("#overview");
+
+  useEffect(() => {
+    const ids = ["overview", "sonar", "analysis", "map", "system", "register"];
+    const io = new IntersectionObserver((en) => {
+      en.forEach((e) => { if (e.isIntersecting) setActive("#" + e.target.id); });
+    }, { threshold: 0.35 });
+    ids.forEach((id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+    return () => io.disconnect();
+  }, []);
+
+  const links = [
+    ["#overview", "OVERVIEW"],
+    ["#sonar", "SONAR"],
+    ["#analysis", "ANALYSIS"],
+    ["#map", "MAP"],
+    ["#system", "SYSTEM"],
+  ];
+  refs.current.utc = utc;
+
+  return (
+    <>
+      <div className="navbar">
+        <div className="nav-inner">
+          <div className="brand">
+            <div className="brand-mark"><IconMark /></div>
+            <div className="brand-name"><b>SONICSWEEP</b><span>MARINE INTELLIGENCE</span></div>
+          </div>
+          <nav className="nav-links">
+            {links.map(([href, label]) => (
+              <a key={href} href={href} className={active === href ? "active" : ""}>{label}</a>
+            ))}
+          </nav>
+          <div className="nav-right">
+            <div className="utc">UTC <b className="tnum">{utc}</b></div>
+            <span className="sys-pill"><span className="dot" />ALL SYSTEMS NOMINAL</span>
+            <button className="burger" aria-label="Menu" onClick={() => setMenu((m) => !m)}>
+              <span /><span /><span />
+            </button>
+          </div>
+        </div>
+        <div className={`mobile-nav ${menu ? "open" : ""}`}>
+          {links.map(([href, label]) => (
+            <a key={href} href={href} className={active === href ? "active" : ""} onClick={() => setMenu(false)}>
+              {label}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div className="wrap">
+        <section className="hero">
+          <span className="hero-eyebrow"><span className="tick" />AI SURVEILLANCE · SIDE-SCAN SONAR</span>
+          <h1>AI-Powered Underwater <span className="acc">Debris &amp; Anomaly Detection</span></h1>
+          <p>Automated target recognition on side-scan sonar strips — preprocessing, deep inference, anomaly
+             classification and risk scoring streamed live from the survey vessel.</p>
+
+          <div className="mission-strip">
+            <div className="ms"><div className="k">MISSION</div><div className="v">SS-042 · <b>DEEP-CLEAN</b></div></div>
+            <div className="ms"><div className="k">REGION</div><div className="v">BIMINI GRAND BANKS</div></div>
+            <div className="ms"><div className="k">VESSEL</div><div className="v">R/V MERIDIAN</div></div>
+            <div className="ms"><div className="k">OPERATOR</div><div className="v">OPS LT. K. VANCE</div></div>
+            <div className="ms"><div className="k">BOTTOM TIME</div><div className="v tnum">{uptime}</div></div>
+          </div>
+        </section>
+
+        <section id="overview" className="section">
+          <div className="dash" style={{ paddingTop: 16 }}>
+            <StatCard label="SCANS LOGGED" value={128} sub="+12 THIS MISSION" tone="blue" />
+            <StatCard label="DETECTIONS" value={246} sub="ALL ARCHIVED MISSIONS" tone="blue" />
+            <StatCard label="HIGH-RISK TARGETS" value={63} sub="98% REVIEWED" tone="red" />
+            <StatCard label="AVG CONFIDENCE" value={87} sub={<span className="up">▴ 2.1% VS LAST</span>} tone="green" bars={[30,44,52,48,60,70,66,80,88]} />
+            <StatCard label="AREA COVERED" value={14} sub="KM² SURVEYED" tone="blue" />
+            <StatCard label="MISSION UPTIME" value={0} sub="HRS · LIVE" tone="green" />
+          </div>
+        </section>
+
+        <section id="sonar" className="section">
+          <div className="dash">
+            <div className="sonar-wrap"><SonarScope /></div>
+            <div className="controls"><SurveyControl /></div>
+          </div>
+        </section>
+
+        <section id="analysis" className="section">
+          <div className="dash"><Analysis /></div>
+        </section>
+
+        <section id="map" className="section">
+          <div className="dash">
+            <div className="map-wrap"><AnomalyMap /></div>
+            <div className="systems"><Systems /></div>
+          </div>
+        </section>
+
+        <section id="system" className="section">
+          <div className="dash" style={{ paddingBottom: 0 }}>
+            <div style={{ gridColumn: "span 12" }}><Archive /></div>
+          </div>
+        </section>
+
+        <section className="section">
+          <div className="dash">
+            <Analytics />
+          </div>
+        </section>
+      </div>
+
+      <footer className="footer">
+        <div className="foot-inner">
+          <div className="fg"><b>SONICSWEEP</b><span>MARINE INTELLIGENCE PLATFORM</span></div>
+          <div className="fg">
+            <span>25.63°N · 79.38°W</span>
+            <span>INTER · DEMO DATA — SYNTHETIC VISUALISATION</span>
+            <span>v0.1.0</span>
+          </div>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

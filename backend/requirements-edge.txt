@@ -1,0 +1,28 @@
+# Optional edge-deployment dependencies.
+#
+# The base inference pipeline (torch + ultralytics) is enough to run and
+# export models. Install this file only when you also want:
+#
+#   - ONNX export          -> onnx          (PyTorch -> ONNX via Ultralytics)
+#   - INT8 quantization    -> onnxruntime   (dynamic INT8 via onnxruntime-quantization)
+#   - ONNX inference       -> onnxruntime
+#   - TensorRT engine      -> tensorrt      (platform-specific, see below)
+#
+# Usage:
+#   pip install -r requirements-edge.txt
+#
+# TensorRT notes:
+#   `tensorrt` is not distributed on PyPI for all platforms. Install the
+#   version matching your NVIDIA driver/CUDA from NVIDIA directly, e.g.
+#
+#     pip install --index-url https://pypi.nvidia.com tensorrt
+#
+#   then re-export the engine with:
+#
+#     python -m app.ai.export --model models/marine_debris_yolov8.pt --format engine
+#
+# No performance benefit is assumed: always verify with
+#   python -m app.ai.benchmark --models <...> --images <real/images>
+
+onnx==1.15.0
+onnxruntime==1.17.1

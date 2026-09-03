@@ -1,0 +1,11 @@
+path: C:\Users\samru\Downloads\Breakpoint Hackathon\marine-debris-detection\backend\data
+train: train/images
+val: val/images
+test: test/images
+names:
+  0: ghost_net
+  1: shipwreck
+  2: pipe
+  3: cylinder
+  4: container
+  5: other_debris
