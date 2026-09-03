@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -126,7 +127,7 @@ async def upload_scan(
         file_path=file_path,
         file_size=float(written),
         status="uploaded",
-        created_at=geo_timestamp,
+        created_at=geo_timestamp or datetime.utcnow(),
     )
     db.add(scan)
     db.commit()
